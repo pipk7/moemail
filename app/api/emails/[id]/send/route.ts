@@ -14,6 +14,14 @@ interface SendEmailRequest {
   content: string
 }
 
+// 修改发件邮箱后缀的函数
+function formatFromEmail(originalEmail: string): string {
+  // 提取本地部分（@之前的部分）
+  const localPart = originalEmail.split('@')[0]
+  // 返回新的邮箱地址，使用 pipk7.top 域名
+  return `${localPart}@pipk7.top`
+}
+
 async function sendWithResend(
   to: string,
   subject: string,
@@ -107,11 +115,13 @@ export async function POST(
       )
     }
 
-    await sendWithResend(to, subject, content, email.address, { apiKey })
+    // 修改：使用新的邮箱后缀发送邮件
+    const formattedFromEmail = formatFromEmail(email.address)
+    await sendWithResend(to, subject, content, formattedFromEmail, { apiKey })
 
     await db.insert(messages).values({
       emailId: email.id,
-      fromAddress: email.address,
+      fromAddress: formattedFromEmail, // 修改：记录修改后的发件邮箱
       toAddress: to,
       subject,
       content: '',
@@ -131,4 +141,4 @@ export async function POST(
       { status: 500 }
     )
   }
-} 
+}
